@@ -12,6 +12,7 @@ class DoorHandleNode(Node):
         self.timer = self.create_timer(1.0, self.publish_state)
         self.get_logger().info('Door Handle Node has been started.')
         self.srv = self.create_service(Trigger, 'toggle_door', self.handle_toggle)
+        self.srv_get = self.create_service(Trigger, 'get_door_state', self.get_door_state)
 
     def publish_state(self):
         msg = Bool(data=self.state)
@@ -23,6 +24,12 @@ class DoorHandleNode(Node):
         response.success = True
         response.message = f'door_closed toggled to {self.state}'
         self.get_logger().info(f'Door state toggled: {self.state}')
+        return response
+    
+    def get_door_state(self, request, response):
+        response.success = True
+        response.message = str(self.state)
+        self.get_logger().info(f'Current door state: {self.state}')
         return response
 
 def main(args=None):
