@@ -74,6 +74,19 @@ Each node provides the following ROS 2 services:
 - ROS 2 (tested on Humble)
 - Python 3.8+
 
+## Software Licenses
+
+This project includes third-party open-source software:
+
+| Dependency        | License         | Requirements               |
+|------------------|-----------------|----------------------------|
+| ROS 2 / rclpy     | Apache 2.0 / BSD‑3‑Clause | Retain copyright and license notices, distribute full license text. |
+| Flask             | BSD‑3‑Clause    | Include notices and full clauses. |
+| Jinja2            | BSD‑3‑Clause    | Same as Flask.             |
+| Flask‑SocketIO    | MIT License     | Retain copyright and license notices. |
+| Flask‑RESTX       | Apache 2.0      | Retain notices, license text, and attribution clauses. |
+
+See the corresponding `LICENSE` files in each repository for details.
 
 
 ## Credits
