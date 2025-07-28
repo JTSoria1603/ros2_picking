@@ -32,11 +32,12 @@ class EmergencyButtonNode(Node):
         self.pub.publish(msg)
         self.get_logger().info(f'Published emergency_button: {self.state}')
 
-    def handle_get_emergency_button_status(self, response):
+    def handle_get_emergency_button_status(self,request,response):
         """
         Handle the 'get_emergency_button_state' service call, returning the current emergency button state.
 
         Args:
+            request: The service request (unused).
             response: The service response object to populate.
 
         Returns:
@@ -47,11 +48,12 @@ class EmergencyButtonNode(Node):
         self.get_logger().info(f'Current emergency button state: {self.state}')
         return response
 
-    def handle_press(self, response):
+    def handle_press(self,request,response):
         """
         Handle the 'press_emergency_button' service call, setting the emergency button state to pressed.
 
         Args:
+            request: The service request (unused).
             response: The service response object to populate.
 
         Returns:
@@ -67,11 +69,12 @@ class EmergencyButtonNode(Node):
             response.message = 'Already PRESSED'
         return response
 
-    def handle_release(self, response):
+    def handle_release(self,request, response):
         """
         Handle the 'release_emergency_button' service call, setting the emergency button state to released.
 
         Args:
+            request: The service request (unused).
             response: The service response object to populate.
 
         Returns:

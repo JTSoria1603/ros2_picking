@@ -2,6 +2,7 @@ FROM ros:humble
 
 ENV DEBIAN_FRONTEND=nointeractive
 
+
 RUN apt update && apt install -y \
     python3-colcon-common-extensions \
     python3-pip \
