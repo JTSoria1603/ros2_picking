@@ -579,7 +579,7 @@
 
         updatePickResponse("loading");
 
-        // Dynamic API base URL: use 'robot-client' if running inside Docker, otherwise 'localhost'
+        // Dynamic API base URL
         const apiBase = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
           ? "http://localhost:8080"
           : "http://robot-client:8080";
