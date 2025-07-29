@@ -26,5 +26,6 @@ RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc && \
 
 SHELL [ "/bin/bash", "-c" ]
 
-CMD tmux new-session -d 'source /opt/ros/humble/setup.bash && source /home/ros2_picking/install/setup.bash && ros2 launch cell_launch cell.launch.py' \; \
-    new-session
+CMD bash -c "source /opt/ros/humble/setup.bash && \
+             source /home/ros2_picking/install/setup.bash && \
+             ros2 launch cell_launch cell.launch.py"

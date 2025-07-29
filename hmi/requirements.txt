@@ -1,0 +1,4 @@
+flask
+flask-socketio
+eventlet
+rclpy==0.19.4

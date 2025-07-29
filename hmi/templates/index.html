@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Robotic Cell HMI</title>
+  <script src="https://cdn.socket.io/4.8.1/socket.io.min.js" integrity="sha384-mkQ3/7FUtcGyoppY6bz/PORYoGqOl7/aSUMn2ymDOJcapfS6PHqxhRTMh1RR0Q6+" crossorigin="anonymous"></script>
+<style>
+    body {
+      background: #f4f6fb;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      color: #222;
+      margin: 0;
+      padding: 0;
+      transition: background 0.3s, color 0.3s;
+    }
+    .container {
+      max-width: 400px;
+      margin: 40px auto;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      padding: 32px 24px 24px 24px;
+      transition: background 0.3s, color 0.3s;
+    }
+    h1 {
+      text-align: center;
+      color: #2a4d69;
+      margin-bottom: 32px;
+      font-size: 2rem;
+      letter-spacing: 1px;
+    }
+    .status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      font-size: 1.1rem;
+      padding: 12px 0;
+      border-bottom: 1px solid #eaeaea;
+    }
+    .status-label {
+      font-weight: 500;
+      color: #2a4d69;
+    }
+    .status-toggle {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .toggle {
+      width: 48px;
+      height: 26px;
+      border-radius: 13px;
+      background: #e0e0e0;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.3s;
+      border: 1px solid #ccc;
+    }
+    .toggle.on {
+      background: #4caf50;
+      border-color: #388e3c;
+    }
+    .toggle.off {
+      background: #e53935;
+      border-color: #b71c1c;
+    }
+    .toggle .knob {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.10);
+      transition: left 0.3s;
+    }
+    .toggle.on .knob {
+      left: 24px;
+    }
+    .toggle-label {
+      font-weight: 600;
+      min-width: 60px;
+      text-align: right;
+    }
+    .circle {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+      border: 2px solid #eaeaea;
+    }
+    .green  { background: linear-gradient(135deg, #4caf50 60%, #81c784 100%); }
+    .yellow { background: linear-gradient(135deg, #ffd600 60%, #fff59d 100%); }
+    .red    { background: linear-gradient(135deg, #e53935 60%, #ff8a80 100%); }
+    .stacklight-label {
+      font-weight: 500;
+      color: #2a4d69;
+      margin-right: 12px;
+    }
+    .stacklight-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0;
+      padding: 12px 0 0 0;
+    }
+    /* Dark mode styles */
+    body.dark {
+      background: #181c24;
+      color: #e0e0e0;
+    }
+    .container.dark {
+      background: #232a36;
+      color: #e0e0e0;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+    }
+    h1.dark {
+      color: #90caf9;
+    }
+    .status-label.dark, .stacklight-label.dark {
+      color: #90caf9;
+    }
+    .status-row.dark {
+      border-bottom: 1px solid #333a4d;
+    }
+    .toggle.dark {
+      background: #333a4d;
+      border-color: #222;
+    }
+    .toggle.on.dark {
+      background: #388e3c;
+      border-color: #2e7d32;
+    }
+    .toggle.off.dark {
+      background: #b71c1c;
+      border-color: #7f0000;
+    }
+     #darkModeBtn {
+      position: absolute;
+      top: 18px;
+      right: 24px;
+      background: none;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      z-index: 10;
+    }
+    #darkModeIcon {
+      font-size: 1.8rem;
+      transition: color 0.3s, transform 0.3s;
+      color: #2a4d69;
+    }
+    body.dark #darkModeIcon {
+      color: #ffd600;
+      transform: rotate(-20deg);
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="mainContainer">
+    <h1 id="mainTitle">Robotic Cell HMI</h1>
+    <div class="status-row" id="emergencyRow">
+      <span class="status-label" id="emergencyLabel">Emergency Button:</span>
+      <span class="status-toggle">
+        <div class="toggle" id="emergencyToggle">
+          <div class="knob"></div>
+        </div>
+        <span class="toggle-label" id="emergency">-</span>
+      </span>
+    </div>
+    <div class="status-row" id="doorRow">
+      <span class="status-label" id="doorLabel">Door Closed:</span>
+      <span class="status-toggle">
+        <div class="toggle" id="doorToggle">
+          <div class="knob"></div>
+        </div>
+        <span class="toggle-label" id="door">-</span>
+      </span>
+    </div>
+    <div class="stacklight-row">
+      <span class="stacklight-label">Stack Light:</span>
+      <span id="light"></span>
+    </div>
+    <button id="darkModeBtn" aria-label="Toggle dark mode" style="position: absolute; top: 18px; right: 24px; background: none; border: none; outline: none; cursor: pointer; z-index: 10;">
+      <span id="darkModeIcon" style="font-size: 1.8rem; transition: color 0.3s; color: #2a4d69;">&#x1F311;</span>
+    </button>
+   
+  </div>
+  <script>
+    // Socket.io
+    const socket = io('ws://127.0.0.1:8082');
+    socket.on('connect', () => {
+      console.log('Connected to the server');
+    });
+    socket.on('status_update', (data) => {
+      console.log('Received status update:', data);
+      // Emergency toggle
+      const emergencyToggle = document.getElementById('emergencyToggle');
+      const emergencyLabel = document.getElementById('emergency');
+      if (data.emergency === true || data.emergency === 'true') {
+        emergencyToggle.classList.add('on');
+        emergencyToggle.classList.remove('off');
+        emergencyLabel.innerText = 'ON';
+      } else {
+        emergencyToggle.classList.remove('on');
+        emergencyToggle.classList.add('off');
+        emergencyLabel.innerText = 'OFF';
+      }
+      // Door toggle
+      const doorToggle = document.getElementById('doorToggle');
+      const doorLabel = document.getElementById('door');
+      if (data.door_closed === true || data.door_closed === 'true') {
+        doorToggle.classList.add('on');
+        doorToggle.classList.remove('off');
+        doorLabel.innerText = 'CLOSED';
+      } else {
+        doorToggle.classList.remove('on');
+        doorToggle.classList.add('off');
+        doorLabel.innerText = 'OPEN';
+      }
+      // Stack light
+      const light = document.getElementById('light');
+      light.innerHTML = '';
+      const circle = document.createElement('span');
+      circle.classList.add('circle');
+      if (data.stack_light === 0 || data.stack_light === '0') circle.classList.add('green');
+      else if (data.stack_light === 1 || data.stack_light === '1') circle.classList.add('yellow');
+      else if (data.stack_light === -1 || data.stack_light === '-1') circle.classList.add('red');
+      light.appendChild(circle);
+    });
+
+    // Dark mode toggle with icon
+    const darkModeBtn = document.getElementById('darkModeBtn');
+    const darkModeIcon = document.getElementById('darkModeIcon');
+    let darkMode = false;
+    darkModeBtn.addEventListener('click', () => {
+      darkMode = !darkMode;
+      document.body.classList.toggle('dark', darkMode);
+      document.getElementById('mainContainer').classList.toggle('dark', darkMode);
+      document.getElementById('mainTitle').classList.toggle('dark', darkMode);
+      document.getElementById('emergencyLabel').classList.toggle('dark', darkMode);
+      document.getElementById('doorLabel').classList.toggle('dark', darkMode);
+      document.getElementById('emergencyRow').classList.toggle('dark', darkMode);
+      document.getElementById('doorRow').classList.toggle('dark', darkMode);
+      document.querySelectorAll('.stacklight-label').forEach(el => el.classList.toggle('dark', darkMode));
+      document.querySelectorAll('.toggle').forEach(el => el.classList.toggle('dark', darkMode));
+      // Cambia el ícono entre luna y sol
+      darkModeIcon.innerHTML = darkMode ? '&#x2600;' : '&#x1F311;';
+    });
+  </script>
+</body>
+</html>
