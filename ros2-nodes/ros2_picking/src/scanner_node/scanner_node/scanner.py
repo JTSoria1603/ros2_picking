@@ -31,11 +31,12 @@ class ScannerNode(Node):
         self.pub.publish(String(data=code))
         self.get_logger().info(f'Published barcode: {code}')
 
-    def handle_get_barcode(self, response):
+    def handle_get_barcode(self,request,response):
         """
         Handle the 'get_barcode' service call, returning the most recently published barcode.
 
         Args:
+            request: The service request (unused).
             response: The service response object to populate.
 
         Returns:

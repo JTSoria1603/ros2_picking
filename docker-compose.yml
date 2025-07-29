@@ -1,0 +1,52 @@
+services:
+
+  robot-client:
+    build:
+      context: ./api-call-handler/client-dummy
+    container_name: robot-client
+    ports:
+      - "8080:8080"
+    privileged: true
+    environment:
+      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+    restart: unless-stopped
+    networks:
+      - robocell-net
+
+  wms-server:
+    build:
+      context: ./api-call-handler/wms-server
+    container_name: wms-server
+    ports:
+      - "8081:8081"
+    restart: unless-stopped
+    networks:
+      - robocell-net
+
+  hmi:
+    build:
+      context: ./hmi
+    container_name: hmi
+    ports:
+      - "8082:8082"
+    depends_on:
+      - wms-server
+      - robot-client
+    restart: unless-stopped
+    networks:
+      - robocell-net
+
+  ros2-nodes:
+    build:
+      context: ./ros2-nodes
+    container_name: ros2-nodes
+    privileged: true
+    environment:
+      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+    restart: unless-stopped
+    networks:
+      - robocell-net
+
+networks:
+  robocell-net:
+    driver: bridge

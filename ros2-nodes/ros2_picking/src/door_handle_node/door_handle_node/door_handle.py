@@ -31,11 +31,12 @@ class DoorHandleNode(Node):
         self.pub.publish(msg)
         self.get_logger().info(f'Published door_closed: {self.state}')
 
-    def handle_toggle(self, response):
+    def handle_toggle(self, request, response):
         """
         Handle the 'toggle_door' service call, toggling the door state and returning the new state.
 
         Args:
+            request: The service request (unused).
             response: The service response object to populate.
 
         Returns:
@@ -47,11 +48,12 @@ class DoorHandleNode(Node):
         self.get_logger().info(f'Door state toggled: {self.state}')
         return response
 
-    def get_door_state(self, response):
+    def get_door_state(self, request, response):
         """
         Handle the 'get_door_state' service call, returning the current door state.
 
         Args:
+            request: The service request (unused).
             response: The service response object to populate.
 
         Returns:

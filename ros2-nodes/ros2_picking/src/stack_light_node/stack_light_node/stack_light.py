@@ -26,11 +26,12 @@ class StackLightNode(Node):
         self.get_logger().info('Stack Light Node has been started.')
         self.srv_get = self.create_service(Trigger, 'get_stack_light_state', self.get_stack_light_state)
 
-    def get_stack_light_state(self, response):
+    def get_stack_light_state(self,request,response):
         """
         Handle the 'get_stack_light_state' service call, returning the current stack light state.
 
         Args:
+            request: The service request (unused).
             response: The service response object to populate.
 
         Returns:
