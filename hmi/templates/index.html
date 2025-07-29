@@ -1,254 +1,653 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Robotic Cell HMI</title>
-  <script src="https://cdn.socket.io/4.8.1/socket.io.min.js" integrity="sha384-mkQ3/7FUtcGyoppY6bz/PORYoGqOl7/aSUMn2ymDOJcapfS6PHqxhRTMh1RR0Q6+" crossorigin="anonymous"></script>
-<style>
-    body {
-      background: #f4f6fb;
-      font-family: 'Segoe UI', Arial, sans-serif;
-      color: #222;
-      margin: 0;
-      padding: 0;
-      transition: background 0.3s, color 0.3s;
-    }
-    .container {
-      max-width: 400px;
-      margin: 40px auto;
-      background: #fff;
-      border-radius: 16px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-      padding: 32px 24px 24px 24px;
-      transition: background 0.3s, color 0.3s;
-    }
-    h1 {
-      text-align: center;
-      color: #2a4d69;
-      margin-bottom: 32px;
-      font-size: 2rem;
-      letter-spacing: 1px;
-    }
-    .status-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 24px;
-      font-size: 1.1rem;
-      padding: 12px 0;
-      border-bottom: 1px solid #eaeaea;
-    }
-    .status-label {
-      font-weight: 500;
-      color: #2a4d69;
-    }
-    .status-toggle {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .toggle {
-      width: 48px;
-      height: 26px;
-      border-radius: 13px;
-      background: #e0e0e0;
-      position: relative;
-      cursor: pointer;
-      transition: background 0.3s;
-      border: 1px solid #ccc;
-    }
-    .toggle.on {
-      background: #4caf50;
-      border-color: #388e3c;
-    }
-    .toggle.off {
-      background: #e53935;
-      border-color: #b71c1c;
-    }
-    .toggle .knob {
-      position: absolute;
-      top: 2px;
-      left: 2px;
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      background: #fff;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.10);
-      transition: left 0.3s;
-    }
-    .toggle.on .knob {
-      left: 24px;
-    }
-    .toggle-label {
-      font-weight: 600;
-      min-width: 60px;
-      text-align: right;
-    }
-    .circle {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      display: inline-block;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.10);
-      border: 2px solid #eaeaea;
-    }
-    .green  { background: linear-gradient(135deg, #4caf50 60%, #81c784 100%); }
-    .yellow { background: linear-gradient(135deg, #ffd600 60%, #fff59d 100%); }
-    .red    { background: linear-gradient(135deg, #e53935 60%, #ff8a80 100%); }
-    .stacklight-label {
-      font-weight: 500;
-      color: #2a4d69;
-      margin-right: 12px;
-    }
-    .stacklight-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 0;
-      padding: 12px 0 0 0;
-    }
-    /* Dark mode styles */
-    body.dark {
-      background: #181c24;
-      color: #e0e0e0;
-    }
-    .container.dark {
-      background: #232a36;
-      color: #e0e0e0;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.25);
-    }
-    h1.dark {
-      color: #90caf9;
-    }
-    .status-label.dark, .stacklight-label.dark {
-      color: #90caf9;
-    }
-    .status-row.dark {
-      border-bottom: 1px solid #333a4d;
-    }
-    .toggle.dark {
-      background: #333a4d;
-      border-color: #222;
-    }
-    .toggle.on.dark {
-      background: #388e3c;
-      border-color: #2e7d32;
-    }
-    .toggle.off.dark {
-      background: #b71c1c;
-      border-color: #7f0000;
-    }
-     #darkModeBtn {
-      position: absolute;
-      top: 18px;
-      right: 24px;
-      background: none;
-      border: none;
-      outline: none;
-      cursor: pointer;
-      z-index: 10;
-    }
-    #darkModeIcon {
-      font-size: 1.8rem;
-      transition: color 0.3s, transform 0.3s;
-      color: #2a4d69;
-    }
-    body.dark #darkModeIcon {
-      color: #ffd600;
-      transform: rotate(-20deg);
-    }
-  </style>
-</head>
-<body>
-  <div class="container" id="mainContainer">
-    <h1 id="mainTitle">Robotic Cell HMI</h1>
-    <div class="status-row" id="emergencyRow">
-      <span class="status-label" id="emergencyLabel">Emergency Button:</span>
-      <span class="status-toggle">
-        <div class="toggle" id="emergencyToggle">
-          <div class="knob"></div>
-        </div>
-        <span class="toggle-label" id="emergency">-</span>
-      </span>
-    </div>
-    <div class="status-row" id="doorRow">
-      <span class="status-label" id="doorLabel">Door Closed:</span>
-      <span class="status-toggle">
-        <div class="toggle" id="doorToggle">
-          <div class="knob"></div>
-        </div>
-        <span class="toggle-label" id="door">-</span>
-      </span>
-    </div>
-    <div class="stacklight-row">
-      <span class="stacklight-label">Stack Light:</span>
-      <span id="light"></span>
-    </div>
-    <button id="darkModeBtn" aria-label="Toggle dark mode" style="position: absolute; top: 18px; right: 24px; background: none; border: none; outline: none; cursor: pointer; z-index: 10;">
-      <span id="darkModeIcon" style="font-size: 1.8rem; transition: color 0.3s; color: #2a4d69;">&#x1F311;</span>
-    </button>
-   
-  </div>
-  <script>
-    // Socket.io
-    const socket = io('ws://127.0.0.1:8082');
-    socket.on('connect', () => {
-      console.log('Connected to the server');
-    });
-    socket.on('status_update', (data) => {
-      console.log('Received status update:', data);
-      // Emergency toggle
-      const emergencyToggle = document.getElementById('emergencyToggle');
-      const emergencyLabel = document.getElementById('emergency');
-      if (data.emergency === true || data.emergency === 'true') {
-        emergencyToggle.classList.add('on');
-        emergencyToggle.classList.remove('off');
-        emergencyLabel.innerText = 'ON';
-      } else {
-        emergencyToggle.classList.remove('on');
-        emergencyToggle.classList.add('off');
-        emergencyLabel.innerText = 'OFF';
+  <head>
+    <title>Robotic Cell HMI</title>
+    <script
+      src="https://cdn.socket.io/4.8.1/socket.io.min.js"
+      integrity="sha384-mkQ3/7FUtcGyoppY6bz/PORYoGqOl7/aSUMn2ymDOJcapfS6PHqxhRTMh1RR0Q6+"
+      crossorigin="anonymous"
+    ></script>
+    <style>
+      body {
+        background: #f4f6fb;
+        font-family: "Segoe UI", Arial, sans-serif;
+        color: #222;
+        margin: 0;
+        padding: 0;
+        transition: background 0.3s, color 0.3s;
       }
-      // Door toggle
-      const doorToggle = document.getElementById('doorToggle');
-      const doorLabel = document.getElementById('door');
-      if (data.door_closed === true || data.door_closed === 'true') {
-        doorToggle.classList.add('on');
-        doorToggle.classList.remove('off');
-        doorLabel.innerText = 'CLOSED';
-      } else {
-        doorToggle.classList.remove('on');
-        doorToggle.classList.add('off');
-        doorLabel.innerText = 'OPEN';
+      .container {
+        max-width: 400px;
+        margin: 40px auto;
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        padding: 32px 24px 24px 24px;
+        transition: background 0.3s, color 0.3s;
       }
-      // Stack light
-      const light = document.getElementById('light');
-      light.innerHTML = '';
-      const circle = document.createElement('span');
-      circle.classList.add('circle');
-      if (data.stack_light === 0 || data.stack_light === '0') circle.classList.add('green');
-      else if (data.stack_light === 1 || data.stack_light === '1') circle.classList.add('yellow');
-      else if (data.stack_light === -1 || data.stack_light === '-1') circle.classList.add('red');
-      light.appendChild(circle);
-    });
+      h1 {
+        text-align: center;
+        color: #2a4d69;
+        margin-bottom: 32px;
+        font-size: 2rem;
+        letter-spacing: 1px;
+      }
+      .status-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 24px;
+        font-size: 1.1rem;
+        padding: 12px 0;
+        border-bottom: 1px solid #eaeaea;
+      }
+      .status-label {
+        font-weight: 500;
+        color: #2a4d69;
+      }
+      .status-toggle {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .toggle {
+        width: 48px;
+        height: 26px;
+        border-radius: 13px;
+        background: #e0e0e0;
+        position: relative;
+        cursor: pointer;
+        transition: background 0.3s;
+        border: 1px solid #ccc;
+      }
+      .toggle.on {
+        background: #4caf50;
+        border-color: #388e3c;
+      }
+      .toggle.off {
+        background: #e53935;
+        border-color: #b71c1c;
+      }
+      .toggle .knob {
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        transition: left 0.3s;
+      }
+      .toggle.on .knob {
+        left: 24px;
+      }
+      .toggle-label {
+        font-weight: 600;
+        min-width: 60px;
+        text-align: right;
+      }
+      .circle {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: inline-block;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        border: 2px solid #eaeaea;
+      }
+      .green {
+        background: linear-gradient(135deg, #4caf50 60%, #81c784 100%);
+      }
+      .yellow {
+        background: linear-gradient(135deg, #ffd600 60%, #fff59d 100%);
+      }
+      .red {
+        background: linear-gradient(135deg, #e53935 60%, #ff8a80 100%);
+      }
+      .stacklight-label {
+        font-weight: 500;
+        color: #2a4d69;
+        margin-right: 12px;
+      }
+      .stacklight-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0;
+        padding: 12px 0 0 0;
+      }
+      /* Dark mode styles */
+      body.dark {
+        background: #181c24;
+        color: #e0e0e0;
+      }
+      .container.dark {
+        background: #232a36;
+        color: #e0e0e0;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+      }
+      h1.dark {
+        color: #90caf9;
+      }
+      .status-label.dark,
+      .stacklight-label.dark {
+        color: #90caf9;
+      }
+      .status-row.dark {
+        border-bottom: 1px solid #333a4d;
+      }
+      .toggle.dark {
+        background: #333a4d;
+        border-color: #222;
+      }
+      .toggle.on.dark {
+        background: #388e3c;
+        border-color: #2e7d32;
+      }
+      .toggle.off.dark {
+        background: #b71c1c;
+        border-color: #7f0000;
+      }
+      #darkModeBtn {
+        position: absolute;
+        top: 18px;
+        right: 24px;
+        background: none;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        z-index: 10;
+      }
+      #darkModeIcon {
+        font-size: 1.8rem;
+        transition: color 0.3s, transform 0.3s;
+        color: #2a4d69;
+      }
+      body.dark #darkModeIcon {
+        color: #ffd600;
+        transform: rotate(-20deg);
+      }
 
-    // Dark mode toggle with icon
-    const darkModeBtn = document.getElementById('darkModeBtn');
-    const darkModeIcon = document.getElementById('darkModeIcon');
-    let darkMode = false;
-    darkModeBtn.addEventListener('click', () => {
-      darkMode = !darkMode;
-      document.body.classList.toggle('dark', darkMode);
-      document.getElementById('mainContainer').classList.toggle('dark', darkMode);
-      document.getElementById('mainTitle').classList.toggle('dark', darkMode);
-      document.getElementById('emergencyLabel').classList.toggle('dark', darkMode);
-      document.getElementById('doorLabel').classList.toggle('dark', darkMode);
-      document.getElementById('emergencyRow').classList.toggle('dark', darkMode);
-      document.getElementById('doorRow').classList.toggle('dark', darkMode);
-      document.querySelectorAll('.stacklight-label').forEach(el => el.classList.toggle('dark', darkMode));
-      document.querySelectorAll('.toggle').forEach(el => el.classList.toggle('dark', darkMode));
-      // Cambia el ícono entre luna y sol
-      darkModeIcon.innerHTML = darkMode ? '&#x2600;' : '&#x1F311;';
-    });
-  </script>
-</body>
+      /* Pick Response Styles */
+      .pick-response {
+        font-size: 0.95rem;
+        line-height: 1.4;
+        transition: all 0.3s ease;
+      }
+
+      .pick-response.success {
+        background: #e8f5e8 !important;
+        border-left-color: #4caf50 !important;
+        color: #2e7d32;
+      }
+
+      .pick-response.error {
+        background: #ffeaea !important;
+        border-left-color: #e53935 !important;
+        color: #c62828;
+      }
+
+      .pick-response.loading {
+        background: #fff3e0 !important;
+        border-left-color: #ff9800 !important;
+        color: #f57c00;
+      }
+
+      /* Dark mode response styles */
+      body.dark .pick-response {
+        background: #2d3748 !important;
+        color: #e2e8f0;
+      }
+
+      body.dark .pick-response.success {
+        background: #1a2e1a !important;
+        border-left-color: #4caf50 !important;
+        color: #81c784;
+      }
+
+      body.dark .pick-response.error {
+        background: #2e1a1a !important;
+        border-left-color: #e53935 !important;
+        color: #ff8a80;
+      }
+
+      body.dark .pick-response.loading {
+        background: #2e2a1a !important;
+        border-left-color: #ff9800 !important;
+        color: #ffb74d;
+      }
+
+      .status-line {
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+
+      .message-line {
+        margin-bottom: 12px;
+      }
+
+      .data-section {
+        background: rgba(255, 255, 255, 0.3);
+        padding: 10px;
+        border-radius: 6px;
+        margin-top: 8px;
+        font-size: 0.9rem;
+      }
+
+      body.dark .data-section {
+        background: rgba(0, 0, 0, 0.2);
+      }
+
+      .error-message {
+        font-weight: 600;
+        margin-top: 8px;
+      }
+
+      /* Pick Form Styles */
+      .pick-form {
+        margin-top: 28px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        background: #f7f7fa;
+        border-radius: 8px;
+        padding: 16px 12px;
+        transition: all 0.3s ease;
+      }
+
+      .pick-form-label {
+        font-weight: 600;
+        color: #2a4d69;
+        transition: color 0.3s ease;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+      }
+
+      .pick-form-input {
+        width: 120px;
+        padding: 8px 12px;
+        border-radius: 6px;
+        border: 1px solid #bbb;
+        background: #fff;
+        color: #333;
+        transition: all 0.3s ease;
+        text-align: center;
+      }
+
+      .pick-form-input:focus {
+        border-color: #2a4d69;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(42, 77, 105, 0.1);
+      }
+
+      .pick-form-button {
+        margin-top: 8px;
+        padding: 8px 0;
+        border-radius: 8px;
+        border: none;
+        background: #2a4d69;
+        color: #fff;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .pick-form-button:hover {
+        background: #1e3a52;
+      }
+
+      .pick-form-button:disabled {
+        background: #94a3b8 !important;
+        cursor: not-allowed !important;
+        opacity: 0.6 !important;
+      }
+
+      /* Dark mode form styles */
+      body.dark .pick-form {
+        background: #2d3748;
+      }
+
+      body.dark .pick-form-label {
+        color: #90caf9;
+      }
+
+      body.dark .pick-form-input {
+        background: #3a4553;
+        border-color: #4a5568;
+        color: #e2e8f0;
+      }
+
+      body.dark .pick-form-input:focus {
+        border-color: #90caf9;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(144, 202, 249, 0.2);
+      }
+
+      body.dark .pick-form-button {
+        background: #3182ce;
+      }
+
+      body.dark .pick-form-button:hover {
+        background: #2c5aa0;
+      }
+
+      body.dark .pick-form-button:disabled {
+        background: #4a5568 !important;
+        cursor: not-allowed !important;
+        opacity: 0.6 !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container" id="mainContainer">
+      <h1 id="mainTitle">Robotic Cell HMI</h1>
+      <div class="status-row" id="emergencyRow">
+        <span class="status-label" id="emergencyLabel">Emergency Button:</span>
+        <span class="status-toggle">
+          <div class="toggle" id="emergencyToggle">
+            <div class="knob"></div>
+          </div>
+          <span class="toggle-label" id="emergency">-</span>
+        </span>
+      </div>
+      <div class="status-row" id="doorRow">
+        <span class="status-label" id="doorLabel">Door Closed:</span>
+        <span class="status-toggle">
+          <div class="toggle" id="doorToggle">
+            <div class="knob"></div>
+          </div>
+          <span class="toggle-label" id="door">-</span>
+        </span>
+      </div>
+      <div class="stacklight-row">
+        <span class="stacklight-label">Stack Light:</span>
+        <span id="light"></span>
+      </div>
+      <form id="pickForm" class="pick-form">
+        <label class="pick-form-label"
+          >pickId:
+          <input
+            type="number"
+            id="pickIdInput"
+            min="0"
+            class="pick-form-input"
+          />
+        </label>
+        <label class="pick-form-label"
+          >quantity:
+          <input
+            type="number"
+            id="quantityInput"
+            min="1"
+            class="pick-form-input"
+          />
+        </label>
+        <button type="submit" class="pick-form-button">Send Request</button>
+      </form>
+      <div
+        id="pickResponse"
+        class="pick-response"
+        style="
+          margin-top: 16px;
+          background: #f7f7fa;
+          border-radius: 8px;
+          padding: 16px;
+          min-height: 24px;
+          border-left: 4px solid transparent;
+          transition: all 0.3s ease;
+        "
+      ></div>
+      <button
+        id="darkModeBtn"
+        aria-label="Toggle dark mode"
+        style="
+          position: absolute;
+          top: 18px;
+          right: 24px;
+          background: none;
+          border: none;
+          outline: none;
+          cursor: pointer;
+          z-index: 10;
+        "
+      >
+        <span
+          id="darkModeIcon"
+          style="font-size: 1.8rem; transition: color 0.3s; color: #2a4d69"
+          >&#x1F311;</span
+        >
+      </button>
+    </div>
+    <script>
+      // Socket.io
+      const socket = io("ws://localhost:8082");
+      socket.on("connect", () => {
+        console.log("Connected to the server");
+      });
+      socket.on("status_update", (data) => {
+        console.log("Received status update:", data);
+        // Emergency toggle
+        const emergencyToggle = document.getElementById("emergencyToggle");
+        const emergencyLabel = document.getElementById("emergency");
+        if (data.emergency === true || data.emergency === "true") {
+          emergencyToggle.classList.add("on");
+          emergencyToggle.classList.remove("off");
+          emergencyLabel.innerText = "ON";
+        } else {
+          emergencyToggle.classList.remove("on");
+          emergencyToggle.classList.add("off");
+          emergencyLabel.innerText = "OFF";
+        }
+        // Door toggle
+        const doorToggle = document.getElementById("doorToggle");
+        const doorLabel = document.getElementById("door");
+        if (data.door_closed === true || data.door_closed === "true") {
+          doorToggle.classList.add("on");
+          doorToggle.classList.remove("off");
+          doorLabel.innerText = "CLOSED";
+        } else {
+          doorToggle.classList.remove("on");
+          doorToggle.classList.add("off");
+          doorLabel.innerText = "OPEN";
+        }
+        // Stack light
+        const light = document.getElementById("light");
+        light.innerHTML = "";
+        const circle = document.createElement("span");
+        circle.classList.add("circle");
+        if (data.stack_light === 0 || data.stack_light === "0")
+          circle.classList.add("green");
+        else if (data.stack_light === 1 || data.stack_light === "1")
+          circle.classList.add("yellow");
+        else if (data.stack_light === -1 || data.stack_light === "-1")
+          circle.classList.add("red");
+        light.appendChild(circle);
+      });
+
+      // Form to send pickId and quantity
+      const pickForm = document.getElementById("pickForm");
+      const pickIdInput = document.getElementById("pickIdInput");
+      const quantityInput = document.getElementById("quantityInput");
+      const submitButton = document.querySelector(".pick-form-button");
+
+      const pickResponse = document.getElementById("pickResponse");
+
+      let isRequestInProgress = false;
+
+      function updatePickResponse(data, isError = false) {
+        pickResponse.classList.remove("success", "error", "loading");
+
+        if (isError) {
+          pickResponse.classList.add("error");
+          pickResponse.innerHTML = `
+        <div class="status-line">Error</div>
+        <div class="error-message">${data}</div>
+      `;
+          return;
+        }
+
+        // Show loading state initially
+        if (data === "loading") {
+          pickResponse.classList.add("loading");
+          pickResponse.innerHTML = `
+        <div class="status-line">Sending request...</div>
+      `;
+          return;
+        }
+
+        // Parse WMS data if available
+        const wmsData = data.wms_data;
+        const isSuccess = wmsData && wmsData.status === "success";
+
+        pickResponse.classList.add(isSuccess ? "success" : "error");
+
+        let responseHtml = "";
+
+        if (isSuccess) {
+          responseHtml += `<div class="status-line">Operation Successful</div>`;
+          responseHtml += `<div class="message-line">${
+            wmsData.message || "Pick confirmed successfully"
+          }</div>`;
+
+          if (wmsData.data) {
+            responseHtml += `<div class="data-section">`;
+            responseHtml += `<strong>Details:</strong><br>`;
+            responseHtml += `• Pick ID: ${wmsData.data.pickId || "N/A"}<br>`;
+            responseHtml += `• Barcode: ${
+              wmsData.data.itemBarcode || data.barcode || "N/A"
+            }<br>`;
+            responseHtml += `• Light status: ${
+              data.stack_light_status !== undefined
+                ? data.stack_light_status
+                : "N/A"
+            }`;
+            responseHtml += `</div>`;
+          }
+        } else {
+          responseHtml += `<div class="status-line">Operation Error</div>`;
+          responseHtml += `<div class="message-line">${
+            wmsData ? wmsData.message : data.message || "Unknown error"
+          }</div>`;
+
+          if (wmsData && wmsData.data && wmsData.data.errorMessage) {
+            responseHtml += `<div class="error-message">Error: ${wmsData.data.errorMessage}</div>`;
+          }
+
+          if (data.barcode) {
+            responseHtml += `<div class="data-section">`;
+            responseHtml += `• Barcode: ${data.barcode}<br>`;
+            responseHtml += `• Light status: ${
+              data.stack_light_status !== undefined
+                ? data.stack_light_status
+                : "N/A"
+            }`;
+            responseHtml += `</div>`;
+          }
+        }
+
+        pickResponse.innerHTML = responseHtml;
+      }
+
+      pickForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        // Prevent multiple simultaneous requests
+        if (isRequestInProgress) {
+          console.log("Request already in progress, ignoring...");
+          return;
+        }
+
+        const pickId = Number(pickIdInput.value);
+        const quantity = Number(quantityInput.value);
+
+        // Validate inputs
+        if (!pickId || !quantity) {
+          updatePickResponse("Please complete all fields", true);
+          return;
+        }
+
+        const req = { pickId, quantity };
+
+        // Set request in progress
+        isRequestInProgress = true;
+        submitButton.disabled = true;
+        submitButton.textContent = "Sending...";
+        submitButton.style.cursor = "not-allowed";
+        submitButton.style.opacity = "0.6";
+
+        updatePickResponse("loading");
+
+        // Dynamic API base URL: use 'robot-client' if running inside Docker, otherwise 'localhost'
+        const apiBase = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+          ? "http://localhost:8080"
+          : "http://robot-client:8080";
+        fetch(`${apiBase}/pick`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(req),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            updatePickResponse(data);
+          })
+          .catch((err) => {
+            updatePickResponse("Connection error: " + err.message, true);
+          })
+          .finally(() => {
+            // Reset button state
+            isRequestInProgress = false;
+            submitButton.disabled = false;
+            submitButton.textContent = "Send Request";
+            submitButton.style.cursor = "pointer";
+            submitButton.style.opacity = "1";
+          });
+      });
+
+      // Dark mode toggle with icon
+      const darkModeBtn = document.getElementById("darkModeBtn");
+      const darkModeIcon = document.getElementById("darkModeIcon");
+      let darkMode = false;
+      darkModeBtn.addEventListener("click", () => {
+        darkMode = !darkMode;
+        document.body.classList.toggle("dark", darkMode);
+        document
+          .getElementById("mainContainer")
+          .classList.toggle("dark", darkMode);
+        document.getElementById("mainTitle").classList.toggle("dark", darkMode);
+        document
+          .getElementById("emergencyLabel")
+          .classList.toggle("dark", darkMode);
+        document.getElementById("doorLabel").classList.toggle("dark", darkMode);
+        document
+          .getElementById("emergencyRow")
+          .classList.toggle("dark", darkMode);
+        document.getElementById("doorRow").classList.toggle("dark", darkMode);
+        document
+          .querySelectorAll(".stacklight-label")
+          .forEach((el) => el.classList.toggle("dark", darkMode));
+        document
+          .querySelectorAll(".toggle")
+          .forEach((el) => el.classList.toggle("dark", darkMode));
+
+        // Apply dark mode to form elements
+        document.getElementById("pickForm").classList.toggle("dark", darkMode);
+        document
+          .querySelectorAll(".pick-form-label")
+          .forEach((el) => el.classList.toggle("dark", darkMode));
+        document
+          .querySelectorAll(".pick-form-input")
+          .forEach((el) => el.classList.toggle("dark", darkMode));
+        document
+          .querySelectorAll(".pick-form-button")
+          .forEach((el) => el.classList.toggle("dark", darkMode));
+
+        // Toggle icon between moon and sun
+        darkModeIcon.innerHTML = darkMode ? "&#x2600;" : "&#x1F311;";
+      });
+    </script>
+  </body>
 </html>

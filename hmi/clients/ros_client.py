@@ -28,7 +28,6 @@ class ROSClient(Node):
         rclpy.spin_until_future_complete(self, future)
         return future.result().message.lower() == "true"
 
-    
     def get_stack_light(self):
         req = Trigger.Request()
         future = self.cli_stack_light.call_async(req)

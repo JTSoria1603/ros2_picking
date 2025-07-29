@@ -19,7 +19,7 @@ RUN apt update && apt install -y \
 COPY . /app
 
 # Instalar dependencias de Python (Flask + SocketIO + eventlet)
-RUN pip install --no-cache-dir flask flask-socketio eventlet
+RUN pip install --no-cache-dir flask flask-socketio eventlet flask_cors
 
 # Exponer el puerto de la app HMI
 EXPOSE 8082

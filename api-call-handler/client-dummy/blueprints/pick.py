@@ -11,7 +11,17 @@ pick_model = pick_ns.model('Pick', {
 })
 
 @pick_ns.route('/')
+@pick_ns.route('')
 class Pick(Resource):
+    def options(self):
+        '''CORS preflight handler'''
+        from flask import make_response
+        response = make_response('', 200)
+        response.headers['Access-Control-Allow-Origin'] = '*'
+        response.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+        return response
     @pick_ns.expect(pick_model)
     def post(self):
         """
